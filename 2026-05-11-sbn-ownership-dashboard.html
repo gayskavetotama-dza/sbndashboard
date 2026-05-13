@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SBN Ownership Dashboard · 11 Mei 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#ffffff;color:#1a202c;min-height:100vh}
+
+/* TOPBAR */
+.topbar{background:#0f2044;color:#fff;padding:20px 36px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.topbar-left h1{font-size:17px;font-weight:700;letter-spacing:.2px}
+.topbar-left p{font-size:12px;opacity:.65;margin-top:3px}
+.badge{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;letter-spacing:.4px}
+.badge span{opacity:.7;font-size:10.5px;display:block;text-align:right;margin-top:2px}
+
+/* KPI STRIP */
+.kpi-strip{display:flex;gap:0;border-bottom:1px solid #e8ecf0;background:#fafbfc}
+.kpi{flex:1;padding:16px 20px;border-right:1px solid #e8ecf0;position:relative}
+.kpi:last-child{border-right:none}
+.kpi-label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#64748b;margin-bottom:5px}
+.kpi-val{font-size:22px;font-weight:800;color:var(--c)}
+.kpi-sub{font-size:11px;color:#94a3b8;margin-top:2px}
+.kpi-delta{font-size:11px;font-weight:700;margin-top:3px}
+.up{color:#16a34a}.dn{color:#dc2626}
+.kpi-bar{position:absolute;bottom:0;left:0;height:3px;width:var(--w);background:var(--c);border-radius:0 2px 0 0}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:1fr 300px;gap:0;min-height:calc(100vh - 160px)}
+.main-col{border-right:1px solid #e8ecf0;padding:0}
+.side-col{padding:0}
+
+/* CHART PANELS */
+.panel{padding:22px 26px;border-bottom:1px solid #e8ecf0}
+.panel-title{font-size:13.5px;font-weight:700;color:#1e293b;margin-bottom:2px}
+.panel-sub{font-size:11.5px;color:#94a3b8;margin-bottom:16px}
+
+/* LEGEND TOGGLES */
+.legend-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.leg-btn{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:1.5px solid var(--c);background:transparent;cursor:pointer;font-size:11.5px;font-weight:600;color:var(--c);transition:all .15s;white-space:nowrap}
+.leg-btn.active{background:var(--c);color:#fff}
+.leg-dot{width:8px;height:8px;border-radius:2px;background:currentColor;flex-shrink:0}
+
+/* CHART WRAP */
+.chart-wrap{position:relative}
+.ts-wrap{height:320px}
+.pie-wrap{height:230px;display:flex;align-items:center;justify-content:center;position:relative}
+.pie-center{position:absolute;text-align:center;pointer-events:none}
+.pc-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#94a3b8}
+.pc-val{font-size:18px;font-weight:800;color:#1e293b;line-height:1.1;margin-top:1px}
+.pc-sub{font-size:10.5px;color:#64748b}
+
+/* PIE LEGEND */
+.pie-legend{margin-top:10px}
+.pl-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f1f5f9}
+.pl-item:last-child{border-bottom:none}
+.pl-dot{width:10px;height:10px;border-radius:2.5px;flex-shrink:0}
+.pl-name{font-size:11.5px;color:#334155;flex:1;font-weight:500}
+.pl-pct{font-size:13px;font-weight:800;color:#1e293b}
+.pl-abs{font-size:10px;color:#94a3b8;text-align:right}
+
+/* ANALYSIS PANEL */
+.analysis-panel{padding:20px 24px;border-bottom:1px solid #e8ecf0}
+.ap-title{font-size:12px;font-weight:700;color:#1e293b;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.signal{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid #f8fafc}
+.signal:last-child{border-bottom:none}
+.sig-icon{width:6px;height:6px;border-radius:50%;background:var(--c);margin-top:5px;flex-shrink:0}
+.sig-text{font-size:11.5px;color:#475569;line-height:1.55}
+.sig-em{font-weight:700;color:var(--c)}
+
+/* CHANGE TABLE */
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{text-align:right;padding:7px 10px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#94a3b8;border-bottom:1.5px solid #e2e8f0}
+.tbl th:first-child{text-align:left}
+.tbl td{text-align:right;padding:8px 10px;border-bottom:1px solid #f1f5f9;color:#334155;font-variant-numeric:tabular-nums}
+.tbl td:first-child{text-align:left}
+.tbl tr:hover td{background:#fafbfc}
+.tbl tr.total-row td{font-weight:700;background:#f8fafc;border-top:1.5px solid #e2e8f0}
+.dot-lbl{display:inline-flex;align-items:center;gap:6px}
+.d{width:8px;height:8px;border-radius:2px;display:inline-block}
+
+/* FOOTER */
+.footer{padding:14px 36px;font-size:10.5px;color:#94a3b8;border-top:1px solid #e8ecf0;display:flex;justify-content:space-between;align-items:center}
+
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr}
+  .main-col{border-right:none}
+  .kpi-strip{flex-wrap:wrap}
+  .kpi{min-width:50%}
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <h1>Kepemilikan SBN Rupiah — Tradable Government Securities</h1>
+    <p>Surat Berharga Negara (SUN + SBSN) · Kementerian Keuangan RI · DJPPR</p>
+  </div>
+  <div>
+    <div class="badge">📅 11 Mei 2026<span>Data terkini tersedia</span></div>
+  </div>
+</div>
+
+<!-- KPI STRIP -->
+<div class="kpi-strip" id="kpiStrip"></div>
+
+<!-- MAIN LAYOUT -->
+<div class="layout">
+
+  <!-- MAIN COLUMN: TIME SERIES -->
+  <div class="main-col">
+    <div class="panel">
+      <div class="panel-title">Tren Pergerakan Kepemilikan SBN</div>
+      <div class="panel-sub">Porsi kepemilikan (%) — Jul 2025 hingga 11 Mei 2026 · Klik legenda untuk fokus/sembunyikan</div>
+      <div class="legend-row" id="tsLegend"></div>
+      <div class="chart-wrap ts-wrap">
+        <canvas id="tsChart"></canvas>
+      </div>
+    </div>
+
+    <!-- CHANGE BAR CHART -->
+    <div class="panel">
+      <div class="panel-title">Perubahan Kepemilikan: Jul 2025 → 11 Mei 2026</div>
+      <div class="panel-sub">Selisih dalam basis poin (bps) — positif = naik, negatif = turun</div>
+      <div class="chart-wrap" style="height:160px">
+        <canvas id="changeChart"></canvas>
+      </div>
+    </div>
+
+    <!-- DETAIL TABLE -->
+    <div class="panel">
+      <div class="panel-title">Rincian Kepemilikan — 11 Mei 2026</div>
+      <div class="panel-sub">Total SBN: SUN + SBSN Rp 6.805,64 Triliun</div>
+      <table class="tbl" id="detailTable"></table>
+    </div>
+  </div>
+
+  <!-- SIDE COLUMN: PIE + ANALYSIS -->
+  <div class="side-col">
+
+    <!-- PIE CHART -->
+    <div class="panel">
+      <div class="panel-title">Komposisi Terkini</div>
+      <div class="panel-sub">11 Mei 2026</div>
+      <div class="pie-wrap">
+        <canvas id="pieChart"></canvas>
+        <div class="pie-center" id="pieCenter">
+          <div class="pc-label">Total SBN</div>
+          <div class="pc-val">6.806 T</div>
+          <div class="pc-sub">Rupiah</div>
+        </div>
+      </div>
+      <div class="pie-legend" id="pieLegend"></div>
+    </div>
+
+    <!-- KEY SIGNALS -->
+    <div class="analysis-panel">
+      <div class="ap-title">📡 Sinyal Utama</div>
+      <div class="signal" style="--c:#d97706">
+        <div class="sig-icon"></div>
+        <div class="sig-text"><span class="sig-em">BI mendominasi:</span> 26,38% (+193 bps vs Jul'25), puncak 26,56% di Apr'29. BI menjadi penyangga utama di tengah tekanan jual asing.</div>
+      </div>
+      <div class="signal" style="--c:#2563eb">
+        <div class="sig-icon"></div>
+        <div class="sig-text"><span class="sig-em">Bank sedikit membaik:</span> 18,23% dari level terendah 18,16% (Apr'29). Kumulatif masih −193 bps vs Jul'25 — tekanan likuiditas bank belum usai.</div>
+      </div>
+      <div class="signal" style="--c:#dc2626">
+        <div class="sig-icon"></div>
+        <div class="sig-text"><span class="sig-em">Non-Residen stagnan:</span> 12,75%, belum ada tanda reversal. Kumulatif −183 bps vs Jul'25 — risk appetite global masih lemah.</div>
+      </div>
+      <div class="signal" style="--c:#7c3aed">
+        <div class="sig-icon"></div>
+        <div class="sig-text"><span class="sig-em">Asuransi & Pensiun terus naik:</span> capai 20,21% (+135 bps). Investor institusional domestik menyerap penerbitan baru secara konsisten.</div>
+      </div>
+      <div class="signal" style="--c:#1d4ed8">
+        <div class="sig-icon"></div>
+        <div class="sig-text"><span class="sig-em">SBN baru diterbitkan:</span> total naik Rp 43,5 T (6.762 → 6.806 T) di Mei 2026. Penyerapan terjaga baik oleh investor domestik.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="footer">
+  <span>Sumber: DJPPR Kementerian Keuangan RI · Posisi SBN Rupiah yang Dapat Diperdagangkan</span>
+  <span>Periode: 31 Jul 2025 – 11 Mei 2026 · Data harian tersedia mulai Apr 2026</span>
+</div>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────────────
+const rawData = [
+  // Monthly snapshots (Jul 2025 – Mar 2026)
+  {date:'2025-07-31',bank:20.16,govt:24.45,reksa:2.95,asur:18.86,nonres:14.58,ind:9.09,others:9.92,total:6419.37},
+  {date:'2025-08-29',bank:20.84,govt:24.06,reksa:3.03,asur:18.50,nonres:14.87,ind:8.89,others:9.81,total:6414.18},
+  {date:'2025-09-30',bank:21.29,govt:24.07,reksa:3.15,asur:18.82,nonres:14.07,ind:8.67,others:9.93,total:6456.36},
+  {date:'2025-10-31',bank:21.78,govt:23.80,reksa:3.41,asur:19.06,nonres:13.58,ind:8.48,others:9.89,total:6466.71},
+  {date:'2025-11-28',bank:22.34,govt:23.15,reksa:3.58,asur:19.45,nonres:13.36,ind:8.27,others:9.85,total:6529.61},
+  {date:'2025-12-31',bank:20.23,govt:24.99,reksa:3.70,asur:19.64,nonres:13.38,ind:8.18,others:9.88,total:6568.81},
+  {date:'2026-01-30',bank:21.78,govt:23.37,reksa:3.89,asur:19.73,nonres:13.17,ind:8.01,others:10.05,total:6675.61},
+  {date:'2026-02-27',bank:20.60,govt:24.42,reksa:3.91,asur:19.74,nonres:12.97,ind:8.11,others:10.25,total:6746.55},
+  {date:'2026-03-31',bank:20.46,govt:24.94,reksa:3.86,asur:19.97,nonres:12.61,ind:7.86,others:10.30,total:6770.90},
+  // Daily April 2026
+  {date:'2026-04-01',bank:21.10,govt:24.33,reksa:3.86,asur:19.96,nonres:12.60,ind:7.86,others:10.29,total:6770.90},
+  {date:'2026-04-02',bank:21.08,govt:24.33,reksa:3.94,asur:20.02,nonres:12.57,ind:7.82,others:10.24,total:6810.90},
+  {date:'2026-04-06',bank:21.06,govt:24.28,reksa:3.97,asur:20.03,nonres:12.59,ind:7.83,others:10.24,total:6806.17},
+  {date:'2026-04-07',bank:21.04,govt:24.26,reksa:3.99,asur:20.03,nonres:12.60,ind:7.84,others:10.24,total:6806.17},
+  {date:'2026-04-08',bank:20.80,govt:24.48,reksa:3.99,asur:20.05,nonres:12.60,ind:7.84,others:10.24,total:6804.42},
+  {date:'2026-04-09',bank:20.83,govt:24.49,reksa:3.99,asur:20.04,nonres:12.56,ind:7.83,others:10.26,total:6819.42},
+  {date:'2026-04-10',bank:20.66,govt:24.64,reksa:3.99,asur:20.04,nonres:12.58,ind:7.83,others:10.26,total:6819.42},
+  {date:'2026-04-13',bank:20.54,govt:24.72,reksa:3.99,asur:20.04,nonres:12.62,ind:7.84,others:10.26,total:6819.42},
+  {date:'2026-04-14',bank:20.13,govt:25.06,reksa:3.98,asur:20.04,nonres:12.69,ind:7.84,others:10.26,total:6819.42},
+  {date:'2026-04-15',bank:19.39,govt:25.63,reksa:3.80,asur:20.19,nonres:12.74,ind:7.91,others:10.34,total:6692.66},
+  {date:'2026-04-16',bank:19.61,govt:25.50,reksa:3.87,asur:20.11,nonres:12.73,ind:7.86,others:10.31,total:6734.66},
+  {date:'2026-04-17',bank:19.67,govt:25.39,reksa:3.87,asur:20.12,nonres:12.75,ind:7.87,others:10.32,total:6734.66},
+  {date:'2026-04-20',bank:19.73,govt:25.35,reksa:3.88,asur:20.12,nonres:12.74,ind:7.87,others:10.31,total:6734.66},
+  {date:'2026-04-21',bank:19.87,govt:25.20,reksa:3.88,asur:20.11,nonres:12.73,ind:7.88,others:10.34,total:6734.66},
+  {date:'2026-04-22',bank:19.88,govt:25.04,reksa:3.87,asur:20.06,nonres:12.72,ind:8.12,others:10.31,total:6752.14},
+  {date:'2026-04-23',bank:19.83,govt:24.97,reksa:3.86,asur:20.08,nonres:12.67,ind:8.12,others:10.47,total:6762.14},
+  {date:'2026-04-24',bank:19.77,govt:24.99,reksa:3.86,asur:20.08,nonres:12.70,ind:8.12,others:10.47,total:6762.14},
+  {date:'2026-04-27',bank:19.22,govt:25.55,reksa:3.84,asur:20.09,nonres:12.70,ind:8.13,others:10.48,total:6762.14},
+  {date:'2026-04-28',bank:19.21,govt:25.53,reksa:3.82,asur:20.10,nonres:12.72,ind:8.13,others:10.48,total:6762.14},
+  {date:'2026-04-29',bank:18.16,govt:26.56,reksa:3.80,asur:20.11,nonres:12.75,ind:8.13,others:10.49,total:6762.14},
+  // Daily Mei 2026
+  {date:'2026-05-04',bank:18.03,govt:26.71,reksa:3.79,asur:20.17,nonres:12.73,ind:8.10,others:10.46,total:6798.14},
+  {date:'2026-05-05',bank:17.82,govt:26.84,reksa:3.82,asur:20.18,nonres:12.77,ind:8.11,others:10.46,total:6798.14},
+  {date:'2026-05-06',bank:17.91,govt:26.75,reksa:3.84,asur:20.18,nonres:12.76,ind:8.11,others:10.46,total:6798.14},
+  {date:'2026-05-07',bank:18.19,govt:26.45,reksa:3.85,asur:20.21,nonres:12.72,ind:8.10,others:10.48,total:6805.64},
+  {date:'2026-05-08',bank:18.21,govt:26.44,reksa:3.85,asur:20.21,nonres:12.70,ind:8.11,others:10.48,total:6805.64},
+  {date:'2026-05-11',bank:18.23,govt:26.38,reksa:3.84,asur:20.21,nonres:12.75,ind:8.11,others:10.48,total:6805.64},
+];
+
+const SERIES = [
+  {key:'bank',  label:'Bank Komersial',    color:'#2563EB'},
+  {key:'govt',  label:'Bank Indonesia',    color:'#d97706'},
+  {key:'asur',  label:'Asuransi & Pensiun',color:'#7c3aed'},
+  {key:'nonres',label:'Non-Residen',       color:'#dc2626'},
+  {key:'ind',   label:'Individu',          color:'#059669'},
+  {key:'reksa', label:'Reksa Dana',        color:'#0891b2'},
+  {key:'others',label:'Lain-lain',         color:'#6b7280'},
+];
+
+const latest      = rawData[rawData.length - 1];
+const first       = rawData[0];
+const latestTotal = latest.total;
+
+const f2 = v => typeof v === 'number' ? v.toLocaleString('id-ID',{minimumFractionDigits:2,maximumFractionDigits:2}) : v;
+const fT = v => v.toLocaleString('id-ID',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+// ─── KPI STRIP ───────────────────────────────────────────────────────────────
+const kpiCfg = [
+  {label:'Total SBN',         val:'6.806 T',  sub:'Rp Triliun',        delta:'+386 T vs Jul\'25', up:true,  c:'#1d4ed8', w:100},
+  {label:'Bank Komersial',    val:'18,23%',   sub:'Rp 1.240 T',        delta:'−193 bps vs Jul\'25',up:false, c:'#2563EB', w:Math.round(latest.bank/25*100)+'%'},
+  {label:'Bank Indonesia',    val:'26,38%',   sub:'Rp 1.795 T (net)',   delta:'+193 bps vs Jul\'25',up:true,  c:'#d97706', w:Math.round(latest.govt/30*100)+'%'},
+  {label:'Asuransi & Pensiun',val:'20,21%',   sub:'Rp 1.375 T',        delta:'+135 bps vs Jul\'25',up:true,  c:'#7c3aed', w:Math.round(latest.asur/22*100)+'%'},
+  {label:'Non-Residen',       val:'12,75%',   sub:'Rp 868 T',          delta:'−183 bps vs Jul\'25',up:false, c:'#dc2626', w:Math.round(latest.nonres/16*100)+'%'},
+  {label:'Individu',          val:'8,11%',    sub:'Rp 552 T',          delta:'−98 bps vs Jul\'25', up:false, c:'#059669', w:Math.round(latest.ind/10*100)+'%'},
+  {label:'Reksa Dana',        val:'3,84%',    sub:'Rp 261 T',          delta:'+89 bps vs Jul\'25', up:true,  c:'#0891b2', w:Math.round(latest.reksa/5*100)+'%'},
+];
+const strip = document.getElementById('kpiStrip');
+kpiCfg.forEach(k => {
+  strip.innerHTML += `<div class="kpi" style="--c:${k.c};--w:${k.w}%">
+    <div class="kpi-label">${k.label}</div>
+    <div class="kpi-val">${k.val}</div>
+    <div class="kpi-sub">${k.sub}</div>
+    <div class="kpi-delta ${k.up?'up':'dn'}">${k.delta}</div>
+    <div class="kpi-bar"></div>
+  </div>`;
+});
+
+// ─── TIME SERIES CHART ───────────────────────────────────────────────────────
+const tsLabels = rawData.map(d => {
+  const dt = new Date(d.date);
+  if (dt < new Date('2026-04-01')) {
+    return dt.toLocaleDateString('id-ID',{month:'short',year:'2-digit'}).replace(/ /g,"'");
+  }
+  return dt.toLocaleDateString('id-ID',{day:'numeric',month:'short'});
+});
+
+const visibleSeries = new Set(SERIES.map(s => s.key));
+
+function buildTsDatasets() {
+  return SERIES.map(s => ({
+    label: s.label,
+    data: rawData.map(d => d[s.key]),
+    borderColor: s.color,
+    backgroundColor: s.color + '18',
+    borderWidth: 2.2,
+    pointRadius: rawData.map(d => new Date(d.date) < new Date('2026-04-01') ? 4 : 2),
+    pointHoverRadius: 6,
+    pointBackgroundColor: s.color,
+    tension: 0.35,
+    fill: false,
+    hidden: !visibleSeries.has(s.key),
+  }));
+}
+
+const tsChart = new Chart(document.getElementById('tsChart'), {
+  type: 'line',
+  data: { labels: tsLabels, datasets: buildTsDatasets() },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    scales: {
+      x: {
+        grid: { display: false },
+        ticks: { font:{size:10.5}, maxRotation:45, color:'#94a3b8' },
+        border: { color:'#e2e8f0' }
+      },
+      y: {
+        min: 2, max: 30,
+        grid: { color:'#f1f5f9', drawBorder:false },
+        ticks: { font:{size:11}, color:'#94a3b8', callback: v => v + '%' },
+        border: { dash:[4,4], color:'transparent' }
+      }
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#1e293b',
+        padding: 12,
+        titleFont: {size:12, weight:'bold'},
+        bodyFont: {size:11.5},
+        callbacks: {
+          title: items => {
+            const d = rawData[items[0].dataIndex];
+            return new Date(d.date).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+          },
+          label: ctx => ` ${ctx.dataset.label}: ${f2(ctx.parsed.y)}%`,
+          afterBody: items => {
+            const d = rawData[items[0].dataIndex];
+            return [``, `  Total SBN: Rp ${fT(d.total)} T`];
+          }
+        }
+      },
+      annotation: {
+        annotations: {
+          divLine: {
+            type: 'line',
+            xMin: 8.5, xMax: 8.5,
+            borderColor: '#cbd5e1',
+            borderWidth: 1.5,
+            borderDash: [5,4],
+            label: {
+              display: true,
+              content: 'Data harian ▶',
+              position: 'start',
+              font: {size:9.5},
+              color: '#94a3b8',
+              backgroundColor: 'transparent',
+              yAdjust: -8
+            }
+          }
+        }
+      }
+    }
+  }
+});
+
+// ─── LEGEND TOGGLE BUTTONS ───────────────────────────────────────────────────
+const legRow = document.getElementById('tsLegend');
+SERIES.forEach((s,i) => {
+  const btn = document.createElement('button');
+  btn.className = 'leg-btn active';
+  btn.style.setProperty('--c', s.color);
+  btn.innerHTML = `<span class="leg-dot"></span>${s.label}`;
+  btn.onclick = () => {
+    const meta = tsChart.getDatasetMeta(i);
+    if (visibleSeries.has(s.key)) {
+      visibleSeries.delete(s.key);
+      meta.hidden = true;
+      btn.classList.remove('active');
+    } else {
+      visibleSeries.add(s.key);
+      meta.hidden = false;
+      btn.classList.add('active');
+    }
+    tsChart.update();
+  };
+  legRow.appendChild(btn);
+});
+
+// ─── CHANGE BAR CHART ────────────────────────────────────────────────────────
+const changeBps = SERIES.map(s => Math.round((latest[s.key] - first[s.key]) * 100));
+new Chart(document.getElementById('changeChart'), {
+  type: 'bar',
+  data: {
+    labels: SERIES.map(s => s.label),
+    datasets: [{
+      data: changeBps,
+      backgroundColor: SERIES.map((s,i) => changeBps[i] >= 0 ? s.color + 'cc' : '#dc2626cc'),
+      borderColor:      SERIES.map((s,i) => changeBps[i] >= 0 ? s.color      : '#dc2626'),
+      borderWidth: 1.5,
+      borderRadius: 5,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: { grid:{display:false}, ticks:{font:{size:10.5}, color:'#64748b'}, border:{color:'#e2e8f0'} },
+      y: {
+        grid: {color:'#f1f5f9'},
+        ticks: {font:{size:10.5}, color:'#94a3b8', callback: v => v+' bps'},
+        border: {dash:[4,4], color:'transparent'}
+      }
+    },
+    plugins: {
+      legend: {display:false},
+      tooltip: {
+        callbacks: {
+          label: ctx => {
+            const v = ctx.parsed.y;
+            return ` Δ ${v>0?'+':''}${v} bps (${v>0?'+':''}${f2(v/100)} pp)`;
+          }
+        }
+      }
+    }
+  }
+});
+
+// ─── DONUT / PIE CHART ───────────────────────────────────────────────────────
+const pieData  = SERIES.map(s => latest[s.key]);
+const pieAbs   = SERIES.map(s => +(latest[s.key] / 100 * latestTotal).toFixed(2));
+const pieChart = new Chart(document.getElementById('pieChart'), {
+  type: 'doughnut',
+  data: {
+    labels: SERIES.map(s => s.label),
+    datasets: [{
+      data: pieData,
+      backgroundColor: SERIES.map(s => s.color),
+      borderWidth: 2.5,
+      borderColor: '#fff',
+      hoverOffset: 8,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '63%',
+    plugins: {
+      legend: {display:false},
+      tooltip: {
+        callbacks: {
+          label: ctx => ` ${f2(ctx.parsed)}%  · Rp ${fT(pieAbs[ctx.dataIndex])} T`
+        }
+      }
+    },
+    onHover: (evt, els) => {
+      const c = document.getElementById('pieCenter');
+      if (els.length) {
+        const i = els[0].index;
+        c.innerHTML = `<div class="pc-label">${SERIES[i].label}</div>
+          <div class="pc-val" style="color:${SERIES[i].color}">${f2(pieData[i])}%</div>
+          <div class="pc-sub">Rp ${fT(pieAbs[i])} T</div>`;
+      } else {
+        c.innerHTML = `<div class="pc-label">Total SBN</div>
+          <div class="pc-val">6.806 T</div><div class="pc-sub">Rupiah</div>`;
+      }
+    }
+  }
+});
+
+// ─── PIE LEGEND ──────────────────────────────────────────────────────────────
+const pieLeg = document.getElementById('pieLegend');
+SERIES.forEach((s, i) => {
+  const delta = latest[s.key] - first[s.key];
+  const dSign = delta >= 0 ? '+' : '';
+  pieLeg.innerHTML += `<div class="pl-item">
+    <span class="pl-dot" style="background:${s.color}"></span>
+    <span class="pl-name">${s.label}</span>
+    <span>
+      <div class="pl-pct">${f2(latest[s.key])}%</div>
+      <div class="pl-abs" style="color:${delta>=0?'#16a34a':'#dc2626'}">${dSign}${f2(delta)} pp</div>
+    </span>
+  </div>`;
+});
+
+// ─── DETAIL TABLE ─────────────────────────────────────────────────────────────
+const tbl = document.getElementById('detailTable');
+tbl.innerHTML = `<thead><tr>
+  <th>Holder</th>
+  <th>% Porsi</th>
+  <th>Nominal (T)</th>
+  <th>Δ vs Jul'25</th>
+</tr></thead><tbody id="tblBody"></tbody>`;
+const tb = document.getElementById('tblBody');
+let sumPct = 0, sumAbs = 0;
+SERIES.forEach((s, i) => {
+  const pct   = latest[s.key];
+  const abs   = +(pct / 100 * latestTotal).toFixed(2);
+  const delta = +(latest[s.key] - first[s.key]).toFixed(2);
+  sumPct += pct; sumAbs += abs;
+  const dc = delta >= 0 ? 'up' : 'dn';
+  const ds = (delta >= 0 ? '+' : '') + f2(delta) + ' pp';
+  tb.innerHTML += `<tr>
+    <td><span class="dot-lbl"><span class="d" style="background:${s.color}"></span>${s.label}</span></td>
+    <td>${f2(pct)}%</td>
+    <td>${fT(abs)}</td>
+    <td class="${dc}">${ds}</td>
+  </tr>`;
+});
+tb.innerHTML += `<tr class="total-row">
+  <td>TOTAL</td>
+  <td>${f2(sumPct)}%</td>
+  <td>${fT(latestTotal)}</td>
+  <td>—</td>
+</tr>`;
+</script>
+</body>
+</html>
