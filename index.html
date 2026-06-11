@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SBN Ownership Dashboard · 2 Juni 2026</title>
+<title>SBN Ownership Dashboard · 8 Juni 2026</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
 <style>
@@ -64,6 +64,12 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#ffffff;color:#1a202
 .dot-lbl{display:inline-flex;align-items:center;gap:6px}
 .d{width:8px;height:8px;border-radius:2px;display:inline-block}
 .footer{padding:14px 36px;font-size:10.5px;color:#94a3b8;border-top:1px solid #e8ecf0;display:flex;justify-content:space-between;align-items:center}
+.ctrl-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:10px}
+.ctrl-row .legend-row{margin-bottom:0;flex:1}
+.mode-toggle{display:inline-flex;border:1.5px solid #e2e8f0;border-radius:8px;overflow:hidden;flex-shrink:0}
+.mode-btn{border:none;background:transparent;padding:5px 11px;font-size:10.5px;font-weight:700;color:#64748b;cursor:pointer;transition:all .15s;white-space:nowrap;letter-spacing:.2px}
+.mode-btn.active{background:#0f2044;color:#fff}
+.mode-btn:not(.active):hover{background:#f1f5f9;color:#1e293b}
 @media(max-width:900px){
   .layout{grid-template-columns:1fr}
   .main-col{border-right:none}
@@ -80,7 +86,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#ffffff;color:#1a202
     <p>Surat Berharga Negara (SUN + SBSN) · Kementerian Keuangan RI · DJPPR</p>
   </div>
   <div>
-    <div class="badge">📅 2 Juni 2026<span>Data terkini tersedia</span></div>
+    <div class="badge">📅 8 Juni 2026<span>Data terkini tersedia</span></div>
   </div>
 </div>
 
@@ -90,18 +96,30 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#ffffff;color:#1a202
   <div class="main-col">
     <div class="panel">
       <div class="panel-title">Tren Pergerakan Kepemilikan SBN</div>
-      <div class="panel-sub">Porsi kepemilikan (%) — Jul 2025 hingga 2 Jun 2026 · Klik legenda untuk fokus/sembunyikan</div>
-      <div class="legend-row" id="tsLegend"></div>
+      <div class="panel-sub" id="tsSub">Porsi kepemilikan (%) — Jul 2025 hingga 8 Jun 2026 · Klik legenda untuk fokus/sembunyikan</div>
+      <div class="ctrl-row">
+        <div class="legend-row" id="tsLegend"></div>
+        <div class="mode-toggle">
+          <button id="modePct" class="mode-btn active">% Porsi</button>
+          <button id="modeNom" class="mode-btn">Rp Triliun</button>
+        </div>
+      </div>
       <div class="chart-wrap ts-wrap"><canvas id="tsChart"></canvas></div>
     </div>
     <div class="panel">
-      <div class="panel-title">Perubahan Kepemilikan: Jul 2025 → 2 Jun 2026</div>
-      <div class="panel-sub">Selisih dalam basis poin (bps) — positif = naik, negatif = turun</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px">
+        <div class="panel-title">Perubahan Kepemilikan: Jul 2025 → 8 Jun 2026</div>
+        <div class="mode-toggle">
+          <button id="changeBps" class="mode-btn active">bps</button>
+          <button id="changeRp" class="mode-btn">Rp T</button>
+        </div>
+      </div>
+      <div class="panel-sub" id="changeSub">Selisih dalam basis poin (bps) — positif = naik, negatif = turun</div>
       <div class="chart-wrap" style="height:160px"><canvas id="changeChart"></canvas></div>
     </div>
     <div class="panel">
-      <div class="panel-title">Rincian Kepemilikan — 2 Juni 2026</div>
-      <div class="panel-sub">Total SBN: SUN + SBSN Rp 6.877,44 Triliun</div>
+      <div class="panel-title">Rincian Kepemilikan — 8 Juni 2026</div>
+      <div class="panel-sub">Total SBN: SUN + SBSN Rp 6.882,29 Triliun</div>
       <table class="tbl" id="detailTable"></table>
     </div>
   </div>
@@ -109,12 +127,12 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#ffffff;color:#1a202
   <div class="side-col">
     <div class="panel">
       <div class="panel-title">Komposisi Terkini</div>
-      <div class="panel-sub">2 Juni 2026</div>
+      <div class="panel-sub">8 Juni 2026</div>
       <div class="pie-wrap">
         <canvas id="pieChart"></canvas>
         <div class="pie-center" id="pieCenter">
           <div class="pc-label">Total SBN</div>
-          <div class="pc-val">6.877 T</div>
+          <div class="pc-val">6.882 T</div>
           <div class="pc-sub">Rupiah</div>
         </div>
       </div>
@@ -125,23 +143,23 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#ffffff;color:#1a202
       <div class="ap-title">📡 Sinyal Utama</div>
       <div class="signal" style="--c:#d97706">
         <div class="sig-icon"></div>
-        <div class="sig-text"><span class="sig-em">BI capai level tertinggi:</span> 27,24% (+279 bps vs Jul'25). Puncak sementara 27,58% di 19 Mei. BI menjadi pemegang terbesar kedua melampaui Asuransi.</div>
+        <div class="sig-text"><span class="sig-em">BI tetap dominan:</span> 27,26% (+281 bps vs Jul'25). Setelah mencapai puncak 27,58% pada 19 Mei, BI stabil di kisaran 27%. Menjadi pemegang terbesar kedua melampaui Asuransi.</div>
       </div>
       <div class="signal" style="--c:#2563eb">
         <div class="sig-icon"></div>
-        <div class="sig-text"><span class="sig-em">Bank Komersial tertekan:</span> 17,62% (−254 bps vs Jul'25), level terendah sepanjang observasi. Likuiditas perbankan terbatas.</div>
+        <div class="sig-text"><span class="sig-em">Bank Komersial tertekan berlanjut:</span> 17,47% (−269 bps vs Jul'25). Sempat naik ke 18,10% pada 5 Jun sebelum turun kembali — tekanan likuiditas perbankan masih terjaga.</div>
       </div>
       <div class="signal" style="--c:#dc2626">
         <div class="sig-icon"></div>
-        <div class="sig-text"><span class="sig-em">Non-Residen stagnan:</span> 12,62% (−196 bps vs Jul'25). Tanpa reversal berarti — kepercayaan asing belum pulih secara struktural.</div>
+        <div class="sig-text"><span class="sig-em">Non-Residen stagnan:</span> 12,63% (−195 bps vs Jul'25). Pergerakan mingguan sangat terbatas — kepercayaan asing belum pulih secara struktural.</div>
       </div>
       <div class="signal" style="--c:#7c3aed">
         <div class="sig-icon"></div>
-        <div class="sig-text"><span class="sig-em">Asuransi & Pensiun terus naik:</span> 20,36% (+150 bps), penyerap domestik paling konsisten. Mendekati posisi tertinggi dalam seri.</div>
+        <div class="sig-text"><span class="sig-em">Asuransi & Pensiun tertinggi sepanjang seri:</span> 20,38% (+152 bps), melampaui level Jun 2 (20,36%). Penyerap domestik paling konsisten dan terus bertumbuh.</div>
       </div>
       <div class="signal" style="--c:#1d4ed8">
         <div class="sig-icon"></div>
-        <div class="sig-text"><span class="sig-em">SBN bertumbuh +Rp 458 T:</span> dari 6.419 T (Jul'25) ke 6.877 T (+7,1%). Penyerapan domestik (BI + Asuransi) mengimbangi penerbitan baru.</div>
+        <div class="sig-text"><span class="sig-em">SBN bertumbuh +Rp 463 T:</span> dari 6.419 T (Jul'25) ke 6.882 T (+7,2%). Penerbitan baru diserap sepenuhnya oleh investor domestik institusional.</div>
       </div>
     </div>
   </div>
@@ -149,7 +167,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#ffffff;color:#1a202
 
 <div class="footer">
   <span>Sumber: DJPPR Kementerian Keuangan RI · Posisi SBN Rupiah yang Dapat Diperdagangkan</span>
-  <span>Periode: 31 Jul 2025 – 2 Jun 2026 · Data harian tersedia mulai Apr 2026</span>
+  <span>Periode: 31 Jul 2025 – 8 Jun 2026 · Data harian tersedia mulai Apr 2026</span>
 </div>
 
 <script>
@@ -204,6 +222,10 @@ const rawData = [
   {date:'2026-05-29',bank:17.89,govt:26.99,reksa:3.72,asur:20.31,nonres:12.61,ind:8.07,others:10.42,total:6846.94},
   // Daily Juni 2026
   {date:'2026-06-02',bank:17.62,govt:27.24,reksa:3.75,asur:20.36,nonres:12.62,ind:8.04,others:10.38,total:6877.44},
+  {date:'2026-06-03',bank:17.69,govt:27.07,reksa:3.77,asur:20.36,nonres:12.67,ind:8.04,others:10.40,total:6877.44},
+  {date:'2026-06-04',bank:17.67,govt:27.08,reksa:3.77,asur:20.35,nonres:12.67,ind:8.03,others:10.42,total:6882.29},
+  {date:'2026-06-05',bank:18.10,govt:26.65,reksa:3.78,asur:20.37,nonres:12.64,ind:8.03,others:10.43,total:6882.29},
+  {date:'2026-06-08',bank:17.47,govt:27.26,reksa:3.78,asur:20.38,nonres:12.63,ind:8.03,others:10.46,total:6882.29},
 ];
 
 const SERIES = [
@@ -223,15 +245,26 @@ const latestTotal = latest.total;
 const f2 = v => typeof v === 'number' ? v.toLocaleString('id-ID',{minimumFractionDigits:2,maximumFractionDigits:2}) : v;
 const fT = v => v.toLocaleString('id-ID',{minimumFractionDigits:2,maximumFractionDigits:2});
 
+// Pre-compute nominal values (Rp Triliun) for each series × each date
+const nomData = {};
+SERIES.forEach(s => {
+  nomData[s.key] = rawData.map(d => +(d[s.key] / 100 * d.total).toFixed(2));
+});
+
+// Nominal change vs Jul'25 (Rp T)
+const changeRupiah = SERIES.map(s =>
+  +(latest[s.key]/100*latest.total - first[s.key]/100*first.total).toFixed(1)
+);
+
 // KPI STRIP
 const kpiCfg = [
-  {label:'Total SBN',         val:'6.877 T',  sub:'Rp Triliun',        delta:'+458 T vs Jul\'25',  up:true,  c:'#1d4ed8', w:100},
-  {label:'Bank Komersial',    val:'17,62%',   sub:'Rp 1.212 T',        delta:'−254 bps vs Jul\'25',up:false, c:'#2563EB', w:Math.round(latest.bank/25*100)+'%'},
-  {label:'Bank Indonesia',    val:'27,24%',   sub:'Rp 1.874 T (net)',   delta:'+279 bps vs Jul\'25',up:true,  c:'#d97706', w:Math.round(latest.govt/30*100)+'%'},
-  {label:'Asuransi & Pensiun',val:'20,36%',   sub:'Rp 1.400 T',        delta:'+150 bps vs Jul\'25',up:true,  c:'#7c3aed', w:Math.round(latest.asur/22*100)+'%'},
-  {label:'Non-Residen',       val:'12,62%',   sub:'Rp 868 T',          delta:'−196 bps vs Jul\'25',up:false, c:'#dc2626', w:Math.round(latest.nonres/16*100)+'%'},
-  {label:'Individu',          val:'8,04%',    sub:'Rp 553 T',          delta:'−105 bps vs Jul\'25',up:false, c:'#059669', w:Math.round(latest.ind/10*100)+'%'},
-  {label:'Reksa Dana',        val:'3,75%',    sub:'Rp 258 T',          delta:'+80 bps vs Jul\'25', up:true,  c:'#0891b2', w:Math.round(latest.reksa/5*100)+'%'},
+  {label:'Total SBN',         val:'6.882 T',  sub:'Rp Triliun',        delta:'+463 T vs Jul\'25',  up:true,  c:'#1d4ed8', w:100},
+  {label:'Bank Komersial',    val:'17,47%',   sub:'Rp 1.202 T',        delta:'−269 bps vs Jul\'25',up:false, c:'#2563EB', w:Math.round(latest.bank/25*100)+'%'},
+  {label:'Bank Indonesia',    val:'27,26%',   sub:'Rp 1.876 T (net)',   delta:'+281 bps vs Jul\'25',up:true,  c:'#d97706', w:Math.round(latest.govt/30*100)+'%'},
+  {label:'Asuransi & Pensiun',val:'20,38%',   sub:'Rp 1.402 T',        delta:'+152 bps vs Jul\'25',up:true,  c:'#7c3aed', w:Math.round(latest.asur/22*100)+'%'},
+  {label:'Non-Residen',       val:'12,63%',   sub:'Rp 869 T',          delta:'−195 bps vs Jul\'25',up:false, c:'#dc2626', w:Math.round(latest.nonres/16*100)+'%'},
+  {label:'Individu',          val:'8,03%',    sub:'Rp 553 T',          delta:'−106 bps vs Jul\'25',up:false, c:'#059669', w:Math.round(latest.ind/10*100)+'%'},
+  {label:'Reksa Dana',        val:'3,78%',    sub:'Rp 260 T',          delta:'+83 bps vs Jul\'25', up:true,  c:'#0891b2', w:Math.round(latest.reksa/5*100)+'%'},
 ];
 const strip = document.getElementById('kpiStrip');
 kpiCfg.forEach(k => {
@@ -250,11 +283,12 @@ const tsLabels = rawData.map(d => {
 });
 
 const visibleSeries = new Set(SERIES.map(s => s.key));
+let tsMode = 'pct'; // 'pct' | 'nom'
 
-function buildTsDatasets() {
+function buildTsDatasets(mode) {
   return SERIES.map(s => ({
     label: s.label,
-    data: rawData.map(d => d[s.key]),
+    data: mode === 'pct' ? rawData.map(d => d[s.key]) : nomData[s.key],
     borderColor: s.color,
     backgroundColor: s.color + '18',
     borderWidth: 2.2,
@@ -269,7 +303,7 @@ function buildTsDatasets() {
 
 const tsChart = new Chart(document.getElementById('tsChart'), {
   type: 'line',
-  data: { labels: tsLabels, datasets: buildTsDatasets() },
+  data: { labels: tsLabels, datasets: buildTsDatasets('pct') },
   options: {
     responsive: true, maintainAspectRatio: false,
     interaction: { mode: 'index', intersect: false },
@@ -286,7 +320,9 @@ const tsChart = new Chart(document.getElementById('tsChart'), {
         titleFont:{size:12,weight:'bold'}, bodyFont:{size:11.5},
         callbacks: {
           title: items => new Date(rawData[items[0].dataIndex].date).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}),
-          label: ctx => ` ${ctx.dataset.label}: ${f2(ctx.parsed.y)}%`,
+          label: ctx => tsMode === 'pct'
+            ? ` ${ctx.dataset.label}: ${f2(ctx.parsed.y)}%`
+            : ` ${ctx.dataset.label}: Rp ${fT(ctx.parsed.y)} T`,
           afterBody: items => [``, `  Total SBN: Rp ${fT(rawData[items[0].dataIndex].total)} T`]
         }
       },
@@ -303,6 +339,28 @@ const tsChart = new Chart(document.getElementById('tsChart'), {
     }
   }
 });
+
+function switchTsMode(mode) {
+  tsMode = mode;
+  document.getElementById('modePct').classList.toggle('active', mode === 'pct');
+  document.getElementById('modeNom').classList.toggle('active', mode === 'nom');
+  SERIES.forEach((s, i) => {
+    tsChart.data.datasets[i].data = mode === 'pct' ? rawData.map(d => d[s.key]) : nomData[s.key];
+  });
+  const yAxis = tsChart.options.scales.y;
+  if (mode === 'pct') {
+    yAxis.min = 2; yAxis.max = 30;
+    yAxis.ticks.callback = v => v + '%';
+    document.getElementById('tsSub').textContent = 'Porsi kepemilikan (%) — Jul 2025 hingga 8 Jun 2026 · Klik legenda untuk fokus/sembunyikan';
+  } else {
+    yAxis.min = 0; yAxis.max = 2100;
+    yAxis.ticks.callback = v => v >= 1000 ? (v/1000).toFixed(1)+'K' : v;
+    document.getElementById('tsSub').textContent = 'Nilai nominal (Rp Triliun) — Jul 2025 hingga 8 Jun 2026 · Klik legenda untuk fokus/sembunyikan';
+  }
+  tsChart.update();
+}
+document.getElementById('modePct').onclick = () => switchTsMode('pct');
+document.getElementById('modeNom').onclick = () => switchTsMode('nom');
 
 // LEGEND TOGGLES
 const legRow = document.getElementById('tsLegend');
@@ -322,7 +380,9 @@ SERIES.forEach((s,i) => {
 
 // CHANGE BAR
 const changeBps = SERIES.map(s => Math.round((latest[s.key] - first[s.key]) * 100));
-new Chart(document.getElementById('changeChart'), {
+let changeMode = 'bps';
+
+const changeChart = new Chart(document.getElementById('changeChart'), {
   type:'bar',
   data: { labels:SERIES.map(s=>s.label), datasets:[{
     data:changeBps,
@@ -336,9 +396,38 @@ new Chart(document.getElementById('changeChart'), {
       x:{grid:{display:false},ticks:{font:{size:10.5},color:'#64748b'},border:{color:'#e2e8f0'}},
       y:{grid:{color:'#f1f5f9'},ticks:{font:{size:10.5},color:'#94a3b8',callback:v=>v+' bps'},border:{dash:[4,4],color:'transparent'}}
     },
-    plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{const v=ctx.parsed.y;return ` Δ ${v>0?'+':''}${v} bps (${v>0?'+':''}${f2(v/100)} pp)`;}}}}
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{
+      const v=ctx.parsed.y;
+      return changeMode === 'bps'
+        ? ` Δ ${v>0?'+':''}${v} bps (${v>0?'+':''}${f2(v/100)} pp)`
+        : ` Δ ${v>0?'+':''}${fT(v)} T`;
+    }}}}
   }
 });
+
+function switchChangeMode(mode) {
+  changeMode = mode;
+  document.getElementById('changeBps').classList.toggle('active', mode === 'bps');
+  document.getElementById('changeRp').classList.toggle('active', mode === 'rp');
+  const ds = changeChart.data.datasets[0];
+  const yAxis = changeChart.options.scales.y;
+  if (mode === 'bps') {
+    ds.data = changeBps;
+    ds.backgroundColor = SERIES.map((s,i)=>changeBps[i]>=0?s.color+'cc':'#dc2626cc');
+    ds.borderColor = SERIES.map((s,i)=>changeBps[i]>=0?s.color:'#dc2626');
+    yAxis.ticks.callback = v => v+' bps';
+    document.getElementById('changeSub').textContent = 'Selisih dalam basis poin (bps) — positif = naik, negatif = turun';
+  } else {
+    ds.data = changeRupiah;
+    ds.backgroundColor = SERIES.map((s,i)=>changeRupiah[i]>=0?s.color+'cc':'#dc2626cc');
+    ds.borderColor = SERIES.map((s,i)=>changeRupiah[i]>=0?s.color:'#dc2626');
+    yAxis.ticks.callback = v => (v>=0?'+':'')+v+' T';
+    document.getElementById('changeSub').textContent = 'Selisih nilai nominal (Rp Triliun) vs Jul 2025 — positif = naik, negatif = turun';
+  }
+  changeChart.update();
+}
+document.getElementById('changeBps').onclick = () => switchChangeMode('bps');
+document.getElementById('changeRp').onclick = () => switchChangeMode('rp');
 
 // DONUT
 const pieData = SERIES.map(s=>latest[s.key]);
@@ -352,7 +441,7 @@ const pieChart = new Chart(document.getElementById('pieChart'),{
     onHover:(evt,els)=>{
       const c=document.getElementById('pieCenter');
       if(els.length){const i=els[0].index;c.innerHTML=`<div class="pc-label">${SERIES[i].label}</div><div class="pc-val" style="color:${SERIES[i].color}">${f2(pieData[i])}%</div><div class="pc-sub">Rp ${fT(pieAbs[i])} T</div>`;}
-      else{c.innerHTML=`<div class="pc-label">Total SBN</div><div class="pc-val">6.877 T</div><div class="pc-sub">Rupiah</div>`;}
+      else{c.innerHTML=`<div class="pc-label">Total SBN</div><div class="pc-val">6.882 T</div><div class="pc-sub">Rupiah</div>`;}
     }
   }
 });
